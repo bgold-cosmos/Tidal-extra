@@ -1,2 +1,2 @@
 # Tidal-custom
-Files related to customizing my Tidal installation.
+Files related to customizing my [Tidal](github.com/tidalcycles/Tidal) installation.
