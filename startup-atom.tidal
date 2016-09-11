@@ -23,6 +23,7 @@ let (***) = foldl (|*|)
     take' n m xs = map (xs!!) [m..n+m-1]
     ngap n d = inside n (densityGap d)
     swing n = inside n (within (0.5,1) (0.3333 ~>))
+    swingBy n x = inside n (within (0.5,1) (x ~>))
     swingEvery n e = inside n (every e $ within (0.5,1) (0.3333 ~>))
     necho x = echo $ negate x
     ntrip x = triple $ negate x
@@ -46,44 +47,47 @@ let (***) = foldl (|*|)
     funrun m n = every 2 (fmap (+ m)) $ run n
     irand2 x y = fmap (+x) $ irand (y - x)
     rand' x = Pattern $ \a -> [(a, a, timeToRand $ (+ x/100) $ midPoint a)]
+    quiet = const silence
     addFloatPar str def = make' VF $ F str $ Just def
     addIntPar str def = make' VI $ I str $ Just def
-    fm = addFloatPar "fm" 0
-    fmf = addFloatPar "fmf" 440
-    modamp = addFloatPar "modamp" 0
-    modfreq = addFloatPar "modfreq" 0
-    feedback = addFloatPar "feedback" 0
-    drone = addFloatPar "drone" 0
-    dronef = addFloatPar "dronef" 440
-    drones = addFloatPar "drones" 0
-    dronefb = addFloatPar "dronefb" 0
-    wub = addFloatPar "wub" 0
-    (wubn, _) = pF "wubn" (Just 60)
-    wubf = addFloatPar "wubf" 2
-    wubw = addFloatPar "wubw" 0.5
-    wubd = addFloatPar "wubd" 0.5
-    wubt = addFloatPar "wubt" 0
-    wubp = addFloatPar "wubp" 0
-    wubv = addFloatPar "wubv" 0
-    wrap = addFloatPar "wrap" 1
-    rect = addFloatPar "rect" 1
-    wrapoff = addFloatPar "wrapoff" 0
-    rectoff = addFloatPar "rectoff" 0
-    envsaw = addFloatPar "envsaw" 0
-    envsawf = addFloatPar "envsawf" 0
-    comp = addFloatPar "comp" 0
-    compa = addFloatPar "compa" 0
-    compr = addFloatPar "compr" 0
-    distort = addFloatPar "distort" 0
-    duck = addFloatPar "duck" 0
-    boom = addFloatPar "boom" 0
-    gboom = addFloatPar "gboom" 0
-    tape = addFloatPar "tape" 0
-    taped = addFloatPar "taped" 0
-    tapefb = addFloatPar "tapefb" 0
-    tapec = addFloatPar "tapec" 0
-    vibrato = addFloatPar "vibrato" 0
-    vrate = addFloatPar "vrate" 0
+    mf x = fst $ pF x (Just 0)
+    mi x = fst $ pI x (Just 0)
+    fm = mf "fm"
+    fmf = mf "fmf"
+    modamp = mf "modamp"
+    modfreq = mf "modfreq"
+    feedback = mf "feedback"
+    wub = mf "wub"
+    wubn = mf "wubn"
+    wubf = mf "wubf"
+    wubw = mf "wubw"
+    wubd = mf "wubd"
+    wubt = mf "wubt"
+    wubp = mf "wubp"
+    wubv = mf "wubv"
+    wrap = mf "wrap"
+    wrapoff = mf "wrapoff"
+    rect = mf "rect"
+    rectoff = mf "rectoff"
+    envsaw = mf "envsaw"
+    envsawf = mf "envsawf"
+    comp = mf "comp"
+    compa = mf "compa"
+    compr = mf "compr"
+    distort = mf "distort"
+    boom = mf "boom"
+    gboom = mf "gboom"
+    tape = mf "tape"
+    taped = mf "taped"
+    tapefb = mf "tapefb"
+    tapec = mf "tapec"
+    vibrato = mf "vibrato"
+    vrate = mf "vrate"
+    leslie = mf "leslie"
+    lrate = mf "lrate"
+    lsize = mf "lsize"
+    perc = mf "perc"
+    percf = mf "percf"
     (fattack, fattack_p) = pF "fattack" (Just 0)
     (fhold, fhold_p) = pF "fhold" (Just 1)
     (frelease, frelease_p) = pF "frelease" (Just 0)
@@ -95,27 +99,3 @@ let (***) = foldl (|*|)
     (sfrelease, sfrelease_p) = pF "sfrelease" (Just 0)
     (sfenv, sfenv_p) = pF "sfenv" (Just 0)
     sfmod = grp [sfcutoff_p, sfresonance_p, sfenv_p, sfattack_p, sfrelease_p]
-
-    reset n = tape "0" # taped "0.5" # tapefb "0" # room "0" # size "0.2" # delay "0" # delayfeedback "0" # orbit (pure n)
-
-    --ftom p = fmap fromIntegral $ tom p
-
-
-    --rhash n = (fromIntegral $ (n*2654435671) `mod` (2^32))/(2**32)
-    --crand x f p = when (((>) x).rhash) f p
-
-    --pingpongBy x t f p = stack [p, t ~> (f p # pan (pure $ (1-x)/2)), (3*t) ~> (f $ f p # pan (pure $ (x+1)/2))]
-    --pingpong = pingpongBy 1
-
-    --pfold op xs = foldl1 bfunc xs
-    --      where bfunc x y = (<*>) (fmap op x) y
-
--- chord stuff
-let chord xs p = stack (map (cshift p) xs) where cshift p x = (+ x) <$> p
-    i4i5 = "[0 5 0 7]"
-    i645 = "[0 8 5 7]"
---- example: d1 $ sound "arpy*8" |+| up (chord [0,3,7] i4i5) |+| shape "0.4"
-
--- comb filters
-let combp x = delay "1" |+| delayfeedback "0" |+| delaytime (fmap recip x)
-    combm x = delay "-1" |+| delayfeedback "0" |+| delaytime (fmap recip x)
